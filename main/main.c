@@ -50,6 +50,8 @@ void app_main()
 
     ESP_ERROR_CHECK(ret);
 
+    
+
     /*Initialize the platform.*/
     if (platformInit() == false) {
         while (1);//if  firmware is running on the wrong hardware, Halt

@@ -230,7 +230,7 @@ void wifiInit(void)
     memcpy(wifi_config.ap.password, WIFI_PWD, strlen(WIFI_PWD) + 1) ;
     wifi_config.ap.max_connection = MAX_STA_CONN;
     wifi_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
-    wifi_config.ap.channel  = 13;
+    // wifi_config.ap.channel  = 2;
 
     if (strlen(WIFI_PWD) == 0) {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;

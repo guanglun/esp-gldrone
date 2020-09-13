@@ -146,6 +146,7 @@ void systemTask(void *arg)
 
   ledInit();
   wifiInit();
+  
   vTaskDelay(M2T(500));
 
 #ifdef DEBUG_QUEUE_MONITOR

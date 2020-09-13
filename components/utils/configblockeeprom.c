@@ -117,60 +117,61 @@ int configblockInit(void)
   if(isInit)
     return 0;
 
-  i2cdevInit(I2C1_DEV);
-  eepromInit(I2C1_DEV);
+  // i2cdevInit(I2C1_DEV);
+  // eepromInit(I2C1_DEV);
 
-  // Because of strange behavior from I2C device during expansion port test
-  // the first read needs to be discarded
-  eepromTestConnection();
+  // // Because of strange behavior from I2C device during expansion port test
+  // // the first read needs to be discarded
+  // eepromTestConnection();
 
-  if (eepromTestConnection())
-  {
-    if (eepromReadBuffer((uint8_t *)&configblock, 0, sizeof(configblock)))
-    {
-      //Verify the config block
-      if (configblockCheckMagic(&configblock))
-      {
-        if (configblockCheckVersion(&configblock))
-        {
-          if (configblockCheckChecksum(&configblock))
-          {
-            // Everything is fine
-            DEBUG_PRINTD("v%d, verification [OK]\n", configblock.version);
-            cb_ok = true;
-          }
-          else
-          {
-            DEBUG_PRINTD("Verification [FAIL]\n");
-            cb_ok = false;
-          }
-        }
-        else // configblockCheckVersion
-        {
-          // Check data integrity of old version data
-          if (configblock.version <= VERSION &&
-              configblockCheckDataIntegrity((uint8_t *)&configblock, configblock.version))
-          {
-            // Not the same version, try to upgrade
-            if (configblockCopyToNewVersion(&configblock, &configblockDefault))
-            {
-              // Write updated config block to eeprom
-              if (configblockWrite(&configblock))
-              {
-                cb_ok = true;
-              }
-            }
-          }
-          else
-          {
-            // Can't copy old version due to bad data.
-            cb_ok = false;
-          }
-        }
-      }
-    }
-  }
+  // if (eepromTestConnection())
+  // {
+  //   if (eepromReadBuffer((uint8_t *)&configblock, 0, sizeof(configblock)))
+  //   {
+  //     //Verify the config block
+  //     if (configblockCheckMagic(&configblock))
+  //     {
+  //       if (configblockCheckVersion(&configblock))
+  //       {
+  //         if (configblockCheckChecksum(&configblock))
+  //         {
+  //           // Everything is fine
+  //           DEBUG_PRINTD("v%d, verification [OK]\n", configblock.version);
+  //           cb_ok = true;
+  //         }
+  //         else
+  //         {
+  //           DEBUG_PRINTD("Verification [FAIL]\n");
+  //           cb_ok = false;
+  //         }
+  //       }
+  //       else // configblockCheckVersion
+  //       {
+  //         // Check data integrity of old version data
+  //         if (configblock.version <= VERSION &&
+  //             configblockCheckDataIntegrity((uint8_t *)&configblock, configblock.version))
+  //         {
+  //           // Not the same version, try to upgrade
+  //           if (configblockCopyToNewVersion(&configblock, &configblockDefault))
+  //           {
+  //             // Write updated config block to eeprom
+  //             if (configblockWrite(&configblock))
+  //             {
+  //               cb_ok = true;
+  //             }
+  //           }
+  //         }
+  //         else
+  //         {
+  //           // Can't copy old version due to bad data.
+  //           cb_ok = false;
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
+  cb_ok = false;
   if (cb_ok == false)
   {
     // Copy default data to used structure.

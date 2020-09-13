@@ -34,14 +34,14 @@ static platformConfig_t configs[] = {
     {
         .deviceType = "EP20",
         .deviceTypeName = "ESPlane 2.0 ",
-        .sensorImplementation = SensorImplementation_mpu6050_HMC5883L_MS5611,
+        .sensorImplementation = SensorImplementation_mpu9250_lps25h,
         .physicalLayoutAntennasAreClose = false,
         .motorMap = motorMapDefaultBrushed,
     },
     {
         .deviceType = "ED12",
         .deviceTypeName = "ESP_Drone_v1_2",
-        .sensorImplementation = SensorImplementation_mpu6050_HMC5883L_MS5611,
+        .sensorImplementation = SensorImplementation_mpu9250_lps25h,
         .physicalLayoutAntennasAreClose = false,
         .motorMap = motorMapDefaultBrushed,
     },

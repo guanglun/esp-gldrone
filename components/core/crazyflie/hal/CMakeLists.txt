@@ -3,8 +3,9 @@ idf_component_register(SRCS "./src/buzzer.c"
                 "./src/ledseq.c" 
                 "./src/pm_esplane.c" 
                 "./src/sensors_mpu6050_hm5883L_ms5611.c" 
+                "./src/sensors_mpu9250_lps25h.c" 
                 "./src/sensors.c" 
                 "./src/usec_time.c" 
                 "./src/wifilink.c"
                 INCLUDE_DIRS "." "interface"
-                REQUIRES i2c_bus deck mpu6050 ms5611 hmc5883l pmw3901 vl53l1 vl53l0 modules utils platform config led)
+                REQUIRES i2c_bus deck mpu6050 mpu6500 ak8963 ms5611 hmc5883l pmw3901 vl53l1 vl53l0 modules utils platform config led)

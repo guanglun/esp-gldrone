@@ -25,31 +25,43 @@
  *
  * 2016.06.15: Initial version by Mike Hamer, http://mikehamer.info
  */
+#include <math.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "freertos/projdefs.h"
+#include "esp_timer.h"
+#include "driver/gpio.h"
 
 #include "sensors_mpu9250_lps25h.h"
-
-#include <math.h>
-#include <stm32f4xx.h>
-
-#include "lps25h.h"
-#include "mpu6500.h"
-#include "ak8963.h"
-
-#include "FreeRTOS.h"
-#include "semphr.h"
-#include "task.h"
-
 #include "system.h"
 #include "configblock.h"
 #include "param.h"
 #include "log.h"
-#include "debug_cf.h"
+
 #include "imu.h"
 #include "nvicconf.h"
 #include "ledseq.h"
 #include "sound.h"
 #include "filter.h"
+#include "config.h"
+#include "stm32_legacy.h"
+
+#include "i2cdev.h"
+
+#include "mpu6500.h"
+#include "ak8963.h"
+
+#include "zranger.h"
+#include "zranger2.h"
+#include "vl53l1x.h"
+#include "flowdeck_v1v2.h"
+#define DEBUG_MODULE "SENSORS"
+#include "debug_cf.h"
 #include "static_mem.h"
+#include "crtp_commander.h"
 
 /**
  * Enable 250Hz digital LPF mode. However does not work with
@@ -57,7 +69,7 @@
  */
 //#define SENSORS_MPU6500_DLPF_256HZ
 
-#define SENSORS_ENABLE_PRESSURE_LPS25H
+//#define SENSORS_ENABLE_PRESSURE_LPS25H
 //#define GYRO_ADD_RAW_AND_VARIANCE_LOG_VALUES
 
 #define SENSORS_ENABLE_MAG_AK8963
@@ -77,6 +89,7 @@
 #define SENSORS_GYRO_BIAS_CALCULATE_STDDEV
 
 // Buffer length for MPU9250 slave reads
+#define GPIO_INTA_MPU6500_IO CONFIG_MPU_PIN_INT
 #define SENSORS_MPU6500_BUFF_LEN    14
 #define SENSORS_MAG_BUFF_LEN        8
 #define SENSORS_BARO_BUFF_S_P_LEN   4
@@ -92,6 +105,10 @@
 #define GYRO_VARIANCE_THRESHOLD_X   (GYRO_VARIANCE_BASE)
 #define GYRO_VARIANCE_THRESHOLD_Y   (GYRO_VARIANCE_BASE)
 #define GYRO_VARIANCE_THRESHOLD_Z   (GYRO_VARIANCE_BASE)
+#define ESP_INTR_FLAG_DEFAULT 0
+
+#define PITCH_CALIB (CONFIG_PITCH_CALIB*1.0/100)
+#define ROLL_CALIB (CONFIG_ROLL_CALIB*1.0/100)
 
 typedef struct
 {
@@ -211,9 +228,11 @@ bool sensorsMpu9250Lps25hAreCalibrated() {
 
 static void sensorsTask(void *param)
 {
-  systemWaitStart();
-
-  sensorsSetupSlaveRead();
+    systemWaitStart();
+    vTaskDelay(M2T(200));
+    DEBUG_PRINTI("xTaskCreate sensorsTask IN");
+    sensorsSetupSlaveRead(); //
+    DEBUG_PRINTI("xTaskCreate sensorsTask SetupSlave done");
 
   while (1)
   {
@@ -225,7 +244,7 @@ static void sensorsTask(void *param)
               (isMagnetometerPresent ? SENSORS_MAG_BUFF_LEN : 0) +
               (isBarometerPresent ? SENSORS_BARO_BUFF_LEN : 0));
 
-      i2cdevReadReg8(I2C3_DEV, MPU6500_ADDRESS_AD0_HIGH, MPU6500_RA_ACCEL_XOUT_H, dataLen, buffer);
+      i2cdevReadReg8(I2C0_DEV, MPU6500_ADDRESS_AD0_HIGH, MPU6500_RA_ACCEL_XOUT_H, dataLen, buffer);
       // these functions process the respective data and queue it on the output queues
       processAccGyroMeasurements(&(buffer[0]));
       if (isMagnetometerPresent)
@@ -251,6 +270,8 @@ static void sensorsTask(void *param)
 
       // Unlock stabilizer task
       xSemaphoreGive(dataReady);
+
+      //DEBUG_PRINTI("ax = %f,  ay = %f,  az = %f,  gx = %f,  gy = %f,  gz = %f , hx = %f , hy = %f, hz =%f \n", sensorData.acc.x, sensorData.acc.y, sensorData.acc.z, sensorData.gyro.x, sensorData.gyro.y, sensorData.gyro.z, sensorData.mag.x, sensorData.mag.y, sensorData.mag.z);
     }
   }
 }
@@ -262,21 +283,21 @@ void sensorsMpu9250Lps25hWaitDataReady(void)
 
 void processBarometerMeasurements(const uint8_t *buffer)
 {
-  static uint32_t rawPressure = 0;
-  static int16_t rawTemp = 0;
+  // static uint32_t rawPressure = 0;
+  // static int16_t rawTemp = 0;
 
-  // Check if there is a new pressure update
-  if (buffer[0] & 0x02) {
-    rawPressure = ((uint32_t) buffer[3] << 16) | ((uint32_t) buffer[2] << 8) | buffer[1];
-  }
-  // Check if there is a new temp update
-  if (buffer[0] & 0x01) {
-    rawTemp = ((int16_t) buffer[5] << 8) | buffer[4];
-  }
+  // // Check if there is a new pressure update
+  // if (buffer[0] & 0x02) {
+  //   rawPressure = ((uint32_t) buffer[3] << 16) | ((uint32_t) buffer[2] << 8) | buffer[1];
+  // }
+  // // Check if there is a new temp update
+  // if (buffer[0] & 0x01) {
+  //   rawTemp = ((int16_t) buffer[5] << 8) | buffer[4];
+  // }
 
-  sensorData.baro.pressure = (float) rawPressure / LPS25H_LSB_PER_MBAR;
-  sensorData.baro.temperature = LPS25H_TEMP_OFFSET + ((float) rawTemp / LPS25H_LSB_PER_CELSIUS);
-  sensorData.baro.asl = lps25hPressureToAltitude(&sensorData.baro.pressure);
+  // sensorData.baro.pressure = (float) rawPressure / LPS25H_LSB_PER_MBAR;
+  // sensorData.baro.temperature = LPS25H_TEMP_OFFSET + ((float) rawTemp / LPS25H_LSB_PER_CELSIUS);
+  // sensorData.baro.asl = lps25hPressureToAltitude(&sensorData.baro.pressure);
 }
 
 void processMagnetometerMeasurements(const uint8_t *buffer)
@@ -326,16 +347,29 @@ void processAccGyroMeasurements(const uint8_t *buffer)
   applyAxis3fLpf((lpf2pData*)(&accLpf), &sensorData.acc);
 }
 
+static void IRAM_ATTR sensors_inta_isr_handler(void *arg)
+{
+    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+    imuIntTimestamp = usecTimestamp(); //This function returns the number of microseconds since esp_timer was initialized
+    xSemaphoreGiveFromISR(sensorsDataReady, &xHigherPriorityTaskWoken);
+
+    if (xHigherPriorityTaskWoken) {
+        portYIELD_FROM_ISR();
+    }
+}
+
 static void sensorsDeviceInit(void)
 {
   isMagnetometerPresent = false;
   isBarometerPresent = false;
 
   // Wait for sensors to startup
-  while (xTaskGetTickCount() < 1000);
+    while (xTaskGetTickCount() < 2000){
+        vTaskDelay(M2T(50));
+    };
 
-  i2cdevInit(I2C3_DEV);
-  mpu6500Init(I2C3_DEV);
+  i2cdevInit(I2C0_DEV);
+  mpu6500Init(I2C0_DEV);
   if (mpu6500TestConnection() == true)
   {
     DEBUG_PRINT("MPU9250 I2C connection [OK].\n");
@@ -391,7 +425,7 @@ static void sensorsDeviceInit(void)
 
 
 #ifdef SENSORS_ENABLE_MAG_AK8963
-  ak8963Init(I2C3_DEV);
+  ak8963Init(I2C0_DEV);
   if (ak8963TestConnection() == true)
   {
     isMagnetometerPresent = true;
@@ -405,7 +439,7 @@ static void sensorsDeviceInit(void)
 #endif
 
 #ifdef SENSORS_ENABLE_PRESSURE_LPS25H
-  lps25hInit(I2C3_DEV);
+  lps25hInit(I2C0_DEV);
   if (lps25hTestConnection() == true)
   {
     lps25hSetEnabled(true);
@@ -496,37 +530,29 @@ static void sensorsTaskInit(void)
 
 static void sensorsInterruptInit(void)
 {
-  GPIO_InitTypeDef GPIO_InitStructure;
-  EXTI_InitTypeDef EXTI_InitStructure;
-
-  sensorsDataReady = xSemaphoreCreateBinaryStatic(&sensorsDataReadyBuffer);
-  dataReady = xSemaphoreCreateBinaryStatic(&dataReadyBuffer);
-
-  // FSYNC "shall not be floating, must be set high or low by the MCU"
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_ResetBits(GPIOC, GPIO_Pin_14);
-
-  // Enable the MPU6500 interrupt on PC13
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-  SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, EXTI_PinSource13);
-
-  EXTI_InitStructure.EXTI_Line = EXTI_Line13;
-  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
-  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-  portDISABLE_INTERRUPTS();
-  EXTI_Init(&EXTI_InitStructure);
-  EXTI_ClearITPendingBit(EXTI_Line13);
-  portENABLE_INTERRUPTS();
+    DEBUG_PRINTD("sensorsInterruptInit \n");
+    gpio_config_t io_conf;
+    //interrupt of rising edge
+    io_conf.intr_type = GPIO_PIN_INTR_POSEDGE;
+    //bit mask of the pins
+    io_conf.pin_bit_mask = (1ULL << GPIO_INTA_MPU6500_IO);
+    //set as input mode
+    io_conf.mode = GPIO_MODE_INPUT;
+    //disable pull-down mode
+    io_conf.pull_down_en = 0;
+    //enable pull-up mode
+    io_conf.pull_up_en = 1;
+    sensorsDataReady = xSemaphoreCreateBinary();
+    dataReady = xSemaphoreCreateBinary();
+    gpio_config(&io_conf);
+    //install gpio isr service
+    //portDISABLE_INTERRUPTS();
+    gpio_set_intr_type(GPIO_INTA_MPU6500_IO, GPIO_INTR_POSEDGE);
+    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+    //hook isr handler for specific gpio pin
+    gpio_isr_handler_add(GPIO_INTA_MPU6500_IO, sensors_inta_isr_handler, (void *)GPIO_INTA_MPU6500_IO);
+    //portENABLE_INTERRUPTS();
+    DEBUG_PRINTD("sensorsInterruptInit done \n");
 }
 
 void sensorsMpu9250Lps25hInit(void)

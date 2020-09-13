@@ -25,7 +25,7 @@
 #include "config.h"
 #include "console.h"
 //if enable, some message will print to remote client 
-//#define DEBUG_PRINT_ON_CONSOLE
+// #define DEBUG_PRINT_ON_CONSOLE
 #ifdef DEBUG_PRINT_ON_UART
   #include "uart1.h"
   #define uartPrintf uart1Printf
@@ -71,7 +71,7 @@ void debugInit(void);
   #define DEBUG_PRINTV(fmt, ...) ESP_LOG_LEVEL_LOCAL(ESP_LOG_VERBOSE,DEBUG_MODULE,fmt, ##__VA_ARGS__) 
   #define DEBUG_PRINT_OS(fmt, ...) ESP_LOG_LEVEL_LOCAL(ESP_LOG_DEBUG,DEBUG_MODULE,fmt, ##__VA_ARGS__) 
 #else
-  #define DEBUG_PRINT(fmt, ...) ESP_LOG_LEVEL_LOCAL(ESP_LOG_DEBUG,DEBUG_MODULE,fmt, ##__VA_ARGS__) 
+  #define DEBUG_PRINT(fmt, ...) ESP_LOG_LEVEL_LOCAL(ESP_LOG_INFO,DEBUG_MODULE,fmt, ##__VA_ARGS__) 
   #define DEBUG_PRINTE(fmt, ...) ESP_LOG_LEVEL_LOCAL(ESP_LOG_ERROR,DEBUG_MODULE,fmt, ##__VA_ARGS__)
   #define DEBUG_PRINTW(fmt, ...) ESP_LOG_LEVEL_LOCAL(ESP_LOG_WARN,DEBUG_MODULE,fmt, ##__VA_ARGS__)
   #define DEBUG_PRINTI(fmt, ...) ESP_LOG_LEVEL_LOCAL(ESP_LOG_INFO,DEBUG_MODULE,fmt, ##__VA_ARGS__)
