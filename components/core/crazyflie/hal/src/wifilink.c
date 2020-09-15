@@ -41,7 +41,7 @@
 #define DEBUG_MODULE "WIFILINK"
 #include "debug_cf.h"
 #include "static_mem.h"
-
+#include "sbus.h"
 #define WIFI_ACTIVITY_TIMEOUT_MS (1000)
 
 static bool isInit = false;
@@ -88,35 +88,55 @@ static bool detectOldVersionApp(UDPPacket *in)
 
 static void wifilinkTask(void *param)
 {
-    while (1) {
-        /* command step - receive  03 Fetch a wifi packet off the queue */
-        wifiGetDataBlocking(&wifiIn);
-        lastPacketTick = xTaskGetTickCount();
-#ifdef CONFIG_ENABLE_LEGACY_APP
+//     while (1) {
+//         /* command step - receive  03 Fetch a wifi packet off the queue */
+//         wifiGetDataBlocking(&wifiIn);
+//         lastPacketTick = xTaskGetTickCount();
+// #ifdef CONFIG_ENABLE_LEGACY_APP
 
-        if (detectOldVersionApp(&wifiIn)) {
-            rch  = (1.0) * (float)(((((uint16_t)wifiIn.data[1] << 8) + (uint16_t)wifiIn.data[2]) - 296) * 15.0 / 150.0); //-15~+15
-            pch  = (-1.0) * (float)(((((uint16_t)wifiIn.data[3] << 8) + (uint16_t)wifiIn.data[4]) - 296) * 15.0 / 150.0); //-15~+15
-            tch  = (((uint16_t)wifiIn.data[5] << 8) + (uint16_t)wifiIn.data[6]) * 59000.0 / 600.0;
-            ych  = (float)(((((uint16_t)wifiIn.data[7] << 8) + (uint16_t)wifiIn.data[8]) - 296) * 15.0 / 150.0); //-15~+15
-            p.size = wifiIn.size + 1 ; //add cksum size
+//         if (detectOldVersionApp(&wifiIn)) {
+//             rch  = (1.0) * (float)(((((uint16_t)wifiIn.data[1] << 8) + (uint16_t)wifiIn.data[2]) - 296) * 15.0 / 150.0); //-15~+15
+//             pch  = (-1.0) * (float)(((((uint16_t)wifiIn.data[3] << 8) + (uint16_t)wifiIn.data[4]) - 296) * 15.0 / 150.0); //-15~+15
+//             tch  = (((uint16_t)wifiIn.data[5] << 8) + (uint16_t)wifiIn.data[6]) * 59000.0 / 600.0;
+//             ych  = (float)(((((uint16_t)wifiIn.data[7] << 8) + (uint16_t)wifiIn.data[8]) - 296) * 15.0 / 150.0); //-15~+15
+//             p.size = wifiIn.size + 1 ; //add cksum size
+//             p.header = CRTP_HEADER(CRTP_PORT_SETPOINT, 0x00); //head redefine
+
+//             memcpy(&p.data[0], &rch, 4);
+//             memcpy(&p.data[4], &pch, 4);
+//             memcpy(&p.data[8], &ych, 4);
+//             memcpy(&p.data[12], &tch, 2);
+//         } else
+// #endif
+//         {
+//             /* command step - receive  04 copy CRTP part from packet, the size not contain head */
+//             p.size = wifiIn.size - 1;
+//             memcpy(&p.raw, wifiIn.data, wifiIn.size);
+//         }
+
+    //     /* command step - receive 05 send to crtpPacketDelivery queue */
+    //     xQueueSend(crtpPacketDelivery, &p, 0) ;
+    // }
+
+while(1)
+{
+            rch = get_rch();
+            pch = get_pch();
+            ych = get_ych();
+            tch  = get_tch();
+            p.size = 11 + 1 ; //add cksum size
             p.header = CRTP_HEADER(CRTP_PORT_SETPOINT, 0x00); //head redefine
 
             memcpy(&p.data[0], &rch, 4);
             memcpy(&p.data[4], &pch, 4);
             memcpy(&p.data[8], &ych, 4);
             memcpy(&p.data[12], &tch, 2);
-        } else
-#endif
-        {
-            /* command step - receive  04 copy CRTP part from packet, the size not contain head */
-            p.size = wifiIn.size - 1;
-            memcpy(&p.raw, wifiIn.data, wifiIn.size);
-        }
 
-        /* command step - receive 05 send to crtpPacketDelivery queue */
-        xQueueSend(crtpPacketDelivery, &p, 0) ;
-    }
+            xQueueSend(crtpPacketDelivery, &p, 0) ;
+
+            vTaskDelay(20 / portTICK_RATE_MS);
+}
+    
 
 }
 
@@ -133,22 +153,24 @@ static int wifilinkReceiveCRTPPacket(CRTPPacket *p)
 
 static int wifilinkSendPacket(CRTPPacket *p)
 {
-    int dataSize;
+    // int dataSize;
 
-    ASSERT(p->size < SYSLINK_MTU);
+    // ASSERT(p->size < SYSLINK_MTU);
 
-    sendBuffer[0] = p->header;
+    // sendBuffer[0] = p->header;
 
-    if (p->size <= CRTP_MAX_DATA_SIZE) {
-        memcpy(&sendBuffer[1], p->data, p->size);
-    }
+    // if (p->size <= CRTP_MAX_DATA_SIZE) {
+    //     memcpy(&sendBuffer[1], p->data, p->size);
+    // }
 
-    dataSize = p->size + 1;
+    // dataSize = p->size + 1;
 
 
-    /*ledseqRun(LINK_DOWN_LED, seq_linkup);*/
+    // /*ledseqRun(LINK_DOWN_LED, seq_linkup);*/
 
-    return wifiSendData(dataSize, sendBuffer);
+    // return wifiSendData(dataSize, sendBuffer);
+
+    return 1;
 }
 
 static int wifilinkSetEnable(bool enable)

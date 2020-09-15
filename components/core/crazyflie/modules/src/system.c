@@ -69,6 +69,8 @@
 #include "debug_cf.h"
 #include "static_mem.h"
 
+#include "sbus.h"
+
 /* Private variable */
 static bool selftestPassed;
 static bool canFly;
@@ -175,6 +177,9 @@ void systemTask(void *arg)
   //  platformSetLowInterferenceRadioMode();
   //}
   soundInit();
+
+  sbus_init();
+
   memInit();
 
 #ifdef PROXIMITY_ENABLED

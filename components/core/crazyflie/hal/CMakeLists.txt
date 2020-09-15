@@ -8,4 +8,4 @@ idf_component_register(SRCS "./src/buzzer.c"
                 "./src/usec_time.c" 
                 "./src/wifilink.c"
                 INCLUDE_DIRS "." "interface"
-                REQUIRES i2c_bus deck mpu6050 mpu6500 ak8963 ms5611 hmc5883l pmw3901 vl53l1 vl53l0 modules utils platform config led)
+                REQUIRES sbus i2c_bus deck mpu6050 mpu6500 ak8963 ms5611 hmc5883l pmw3901 vl53l1 vl53l0 modules utils platform config led)

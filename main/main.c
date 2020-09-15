@@ -32,7 +32,7 @@
 #include "system.h"
 #define DEBUG_MODULE "APP_MAIN"
 #include "debug_cf.h"
-
+#include "sbus.h"
 void app_main()
 {
     /*
@@ -50,7 +50,12 @@ void app_main()
 
     ESP_ERROR_CHECK(ret);
 
-    
+    // sbus_init();
+
+    // while(1)
+    // {
+    //     vTaskDelay(1000 / portTICK_RATE_MS);
+    // }
 
     /*Initialize the platform.*/
     if (platformInit() == false) {
