@@ -79,7 +79,7 @@ void zRanger2Init(void)
   if (isInit)
     return;
 
-  if (vl53l1xInit(&dev, I2C1_DEV))
+  if (vl53l1xInit(&dev, I2C0_DEV))
   {
     DEBUG_PRINTI("Z-down sensor [OK]\n");
   }
@@ -131,6 +131,7 @@ void zRanger2Task(void* arg)
     // occur as >8 [m] measurements
     if (range_last < RANGE_OUTLIER_LIMIT) {
       float distance = (float)range_last * 0.001f; // Scale from [mm] to [m]
+      //DEBUG_PRINTI("Z-down sensor %f \n",distance);
       float stdDev = expStdA * (1.0f  + expf( expCoeff * (distance - expPointA)));
       rangeEnqueueDownRangeInEstimator(distance, stdDev, xTaskGetTickCount());
     }

@@ -63,11 +63,18 @@
 #include "static_mem.h"
 #include "crtp_commander.h"
 
+
 /**
  * Enable 250Hz digital LPF mode. However does not work with
  * multiple slave reading through MPU9250 (MAG and BARO), only single for some reason.
  */
 //#define SENSORS_MPU6500_DLPF_256HZ
+
+/**
+ * Enable sensors on board 
+ */
+#define SENSORS_ENABLE_RANGE_VL53L1X
+#define SENSORS_ENABLE_FLOW_PMW3901
 
 //#define SENSORS_ENABLE_PRESSURE_LPS25H
 //#define GYRO_ADD_RAW_AND_VARIANCE_LOG_VALUES
@@ -159,6 +166,8 @@ static void applyAxis3fLpf(lpf2pData *data, Axis3f* in);
 
 static bool isBarometerPresent = false;
 static bool isMagnetometerPresent = false;
+static bool isVl53l1xPresent = false;
+static bool isPmw3901Present = false;
 
 static bool isMpu6500TestPassed = false;
 static bool isAK8963TestPassed = false;
@@ -451,6 +460,35 @@ static void sensorsDeviceInit(void)
     //TODO: Should sensor test fail hard if no connection
     DEBUG_PRINT("LPS25H I2C connection [FAIL].\n");
   }
+#endif
+
+#ifdef SENSORS_ENABLE_RANGE_VL53L1X
+    zRanger2Init();
+
+    if (zRanger2Test() == true) {
+        isVl53l1xPresent = true;
+        DEBUG_PRINTI("VL53L1X I2C connection [OK].\n");
+    } else {
+        //TODO: Should sensor test fail hard if no connection
+        DEBUG_PRINTW("VL53L1X I2C connection [FAIL].\n");
+    }
+
+#endif
+#ifdef SENSORS_ENABLE_FLOW_PMW3901
+
+    flowdeck2Init();
+
+    if (flowdeck2Test() == true) {
+        isPmw3901Present = true;
+        setCommandermode(POSHOLD_MODE);
+        DEBUG_PRINTI("PMW3901 SPI connection [OK].\n");
+    } else {
+        //TODO: Should sensor test fail hard if no connection
+        DEBUG_PRINTW("PMW3901 SPI connection [FAIL].\n");
+    }
+
+
+
 #endif
 
   cosPitch = cosf(configblockGetCalibPitch() * (float) M_PI/180);
