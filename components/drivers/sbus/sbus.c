@@ -137,7 +137,7 @@ static void uart_event_task(void *pvParameters)
                             rc_data[2] = 200;
                         if(rc_data[2] > 1500)
                             rc_data[2] = 1500;                            
-                        tch  = (rc_data[2] - 200) * 15;  //1000-60000
+                        tch  = (rc_data[2] - 200) * 30;  //1000-60000
                         
 
                         //DEBUG_PRINT("%d\t%d\t%d\t%d\t%f\t%f\t%f\t%d",rc_data[0],rc_data[1],rc_data[2],rc_data[3],rch,pch,ych,tch);
