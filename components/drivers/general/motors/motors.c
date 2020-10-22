@@ -207,7 +207,7 @@ void motorsSetRatio(uint32_t id, uint16_t ithrust)
 
         // static int cont = 0;
         // cont++;
-        // if(cont>=4)
+        // if(cont>=400)
         // {
         //     cont = 0;
         //     DEBUG_PRINT("%d\t%d\t%d\t%d",motor_ratios[0],motor_ratios[1],motor_ratios[2],motor_ratios[3]);

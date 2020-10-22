@@ -27,7 +27,7 @@ static QueueHandle_t uart0_queue;
 uint16_t rc_data[16] = {1000, 1000, 1500, 1000};
 uint8_t dtmp[RD_BUF_SIZE];
 float rch, pch, ych;
-static uint16_t tch;
+static uint16_t tch,is_send=0;
 static int sbus_parse(uint16_t *rc_data,uint8_t *buf)
 {
 		// if (buf[0] != 0x0F)
@@ -41,10 +41,10 @@ static int sbus_parse(uint16_t *rc_data,uint8_t *buf)
 		rc_data[2] = ((buf[3] >> 6 | buf[4] << 2 | buf[5] << 10) & 0x07FF);
 		rc_data[3] = ((buf[5] >> 1 | buf[6] << 7) & 0x07FF);
 
-		// rc_data[4] = ((buf[6] >> 4 | buf[7] << 4) & 0x07FF);
-		// rc_data[5] = ((buf[7] >> 7 | buf[8] << 1 | buf[9] << 9) & 0x07FF);
-		// rc_data[6] = ((buf[9] >> 2 | buf[10] << 6) & 0x07FF);
-		// rc_data[7] = ((buf[10] >> 5 | buf[11] << 3) & 0x07FF);
+		rc_data[4] = ((buf[6] >> 4 | buf[7] << 4) & 0x07FF);
+		rc_data[5] = ((buf[7] >> 7 | buf[8] << 1 | buf[9] << 9) & 0x07FF);
+		rc_data[6] = ((buf[9] >> 2 | buf[10] << 6) & 0x07FF);
+		rc_data[7] = ((buf[10] >> 5 | buf[11] << 3) & 0x07FF);
 		// rc_data[8] = ((buf[12] | buf[13] << 8) & 0x07FF);
 		// rc_data[9] = ((buf[13] >> 3 | buf[14] << 5) & 0x07FF);
 		// rc_data[10] = ((buf[14] >> 6 | buf[15] << 2 | buf[16] << 10) & 0x07FF);
@@ -97,6 +97,10 @@ float get_ych(void)
 {
     return ych;
 }
+uint16_t get_is_send(void)
+{
+    return is_send;
+}
 static void uart_event_task(void *pvParameters)
 {
     uart_event_t event;
@@ -135,12 +139,18 @@ static void uart_event_task(void *pvParameters)
 
                         if(rc_data[2] < 300)
                             rc_data[2] = 200;
-                        if(rc_data[2] > 1500)
-                            rc_data[2] = 1500;                            
+                        if(rc_data[2] > 2000)
+                            rc_data[2] = 2000;                            
                         tch  = (rc_data[2] - 200) * 30;  //1000-60000
                         
-
-                        //DEBUG_PRINT("%d\t%d\t%d\t%d\t%f\t%f\t%f\t%d",rc_data[0],rc_data[1],rc_data[2],rc_data[3],rch,pch,ych,tch);
+                        if(rc_data[5] > 1800)
+                        {
+                            is_send=1;
+                        }else{
+                            is_send=0;
+                            //DEBUG_PRINT("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d",rc_data[0],rc_data[1],rc_data[2],rc_data[3],rc_data[4],rc_data[5],rc_data[6],rc_data[7]);
+                        }
+                        
                     }
                     // ESP_LOGI(TAG, "[DATA EVT]:");
                     // uart_write_bytes(EX_UART_NUM, (const char*) dtmp, event.size);

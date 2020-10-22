@@ -131,6 +131,8 @@ void zRanger2Task(void* arg)
     // occur as >8 [m] measurements
     if (range_last < RANGE_OUTLIER_LIMIT) {
       float distance = (float)range_last * 0.001f; // Scale from [mm] to [m]
+      if(distance < 0)
+        distance = 0;
       //DEBUG_PRINTI("Z-down sensor %f \n",distance);
       float stdDev = expStdA * (1.0f  + expf( expCoeff * (distance - expPointA)));
       rangeEnqueueDownRangeInEstimator(distance, stdDev, xTaskGetTickCount());

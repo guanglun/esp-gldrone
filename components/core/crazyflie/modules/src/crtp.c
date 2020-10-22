@@ -179,6 +179,7 @@ void crtpRxTask(void *param)
     {
       if (!link->receivePacket(&p))
       {
+        //DEBUG_PRINT("%d\t%d\t%d\t%02X",p.channel,p.reserved,p.port,p.data[0]); 
         if (queues[p.port])
         {
           if (xQueueSend(queues[p.port], &p, 0) == errQUEUE_FULL)

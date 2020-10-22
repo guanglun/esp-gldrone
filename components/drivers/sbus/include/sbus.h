@@ -29,6 +29,7 @@
 
 void sbus_init();
 uint16_t get_tch(void);
+uint16_t get_is_send(void);
 float get_rch(void);
 float get_pch(void);
 float get_ych(void);

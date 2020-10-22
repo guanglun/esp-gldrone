@@ -86,8 +86,11 @@ static bool detectOldVersionApp(UDPPacket *in)
     return false;
 }
 
+
+#define USE_SBUS
 static void wifilinkTask(void *param)
 {
+#ifndef USE_SBUS
     while (1) {
         /* command step - receive  03 Fetch a wifi packet off the queue */
         wifiGetDataBlocking(&wifiIn);
@@ -117,31 +120,36 @@ static void wifilinkTask(void *param)
         /* command step - receive 05 send to crtpPacketDelivery queue */
         xQueueSend(crtpPacketDelivery, &p, 0) ;
     }
+#endif
+#ifdef USE_SBUS
+while(1)
+{       
+    if(get_is_send() != 0)
+    {
+            rch = get_rch();
+            pch = get_pch();
+            ych = get_ych();
+            tch  = get_tch();
+            p.size = 11 + 1 ; //add cksum size
+            p.header = CRTP_HEADER(CRTP_PORT_SETPOINT, 0x00); //head redefine
 
-// while(1)
-// {
-//             rch = get_rch();
-//             pch = get_pch();
-//             ych = get_ych();
-//             tch  = get_tch();
-//             p.size = 11 + 1 ; //add cksum size
-//             p.header = CRTP_HEADER(CRTP_PORT_SETPOINT, 0x00); //head redefine
+            memcpy(&p.data[0], &rch, 4);
+            memcpy(&p.data[4], &pch, 4);
+            memcpy(&p.data[8], &ych, 4);
+            memcpy(&p.data[12], &tch, 2);
 
-//             memcpy(&p.data[0], &rch, 4);
-//             memcpy(&p.data[4], &pch, 4);
-//             memcpy(&p.data[8], &ych, 4);
-//             memcpy(&p.data[12], &tch, 2);
+            xQueueSend(crtpPacketDelivery, &p, 0) ;
+    }
 
-//             xQueueSend(crtpPacketDelivery, &p, 0) ;
-
-//             vTaskDelay(20 / portTICK_RATE_MS);
-// }
-    
+    vTaskDelay(50 / portTICK_RATE_MS);
+}
+#endif    
 
 }
 
 static int wifilinkReceiveCRTPPacket(CRTPPacket *p)
 {
+
     if (xQueueReceive(crtpPacketDelivery, p, M2T(100)) == pdTRUE) {
         ledseqRun(LINK_LED, seq_linkup);
         DEBUG_PRINTD("3.wifilinkReceiveCRTPPacket got data size = %d", p->size);
@@ -153,6 +161,7 @@ static int wifilinkReceiveCRTPPacket(CRTPPacket *p)
 
 static int wifilinkSendPacket(CRTPPacket *p)
 {
+#ifndef USE_SBUS    
     int dataSize;
 
     ASSERT(p->size < SYSLINK_MTU);
@@ -169,8 +178,8 @@ static int wifilinkSendPacket(CRTPPacket *p)
     /*ledseqRun(LINK_DOWN_LED, seq_linkup);*/
 
     return wifiSendData(dataSize, sendBuffer);
-
-//    return 1;
+#endif  
+    return 1;
 }
 
 static int wifilinkSetEnable(bool enable)
