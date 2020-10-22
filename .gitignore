@@ -1,6 +1,4 @@
 build/
-sdkconfig
-sdkconfig.old
 esp_idf
 .vscode/
 docs/zh_CN/md/_build
