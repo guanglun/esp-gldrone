@@ -200,9 +200,19 @@ void motorsSetRatio(uint32_t id, uint16_t ithrust)
         }
 
 #endif
+
         ledc_set_duty(motors_channel[id].speed_mode, motors_channel[id].channel, (uint32_t)motorsConv16ToBits(ratio));
         ledc_update_duty(motors_channel[id].speed_mode, motors_channel[id].channel);
         motor_ratios[id] = ratio;
+
+        // static int cont = 0;
+        // cont++;
+        // if(cont>=4)
+        // {
+        //     cont = 0;
+        //     DEBUG_PRINT("%d\t%d\t%d\t%d",motor_ratios[0],motor_ratios[1],motor_ratios[2],motor_ratios[3]);
+        // }
+            
 #ifdef DEBUG_EP2
         DEBUG_PRINT_LOCAL("motors ID = %d ,ithrust_10bit = %d", id, (uint32_t)motorsConv16ToBits(ratio));
 #endif
