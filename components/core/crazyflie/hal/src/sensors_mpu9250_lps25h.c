@@ -73,8 +73,8 @@
 /**
  * Enable sensors on board 
  */
-#define SENSORS_ENABLE_RANGE_VL53L1X
-#define SENSORS_ENABLE_FLOW_PMW3901
+// #define SENSORS_ENABLE_RANGE_VL53L1X
+// #define SENSORS_ENABLE_FLOW_PMW3901
 
 //#define SENSORS_ENABLE_PRESSURE_LPS25H
 //#define GYRO_ADD_RAW_AND_VARIANCE_LOG_VALUES
@@ -326,11 +326,11 @@ void processAccGyroMeasurements(const uint8_t *buffer)
 {
   Axis3f accScaled;
   // Note the ordering to correct the rotated 90º IMU coordinate system
-  accelRaw.y = (((int16_t) buffer[0]) << 8) | buffer[1];
-  accelRaw.x = (((int16_t) buffer[2]) << 8) | buffer[3];
+  accelRaw.x = (((int16_t) buffer[0]) << 8) | buffer[1];
+  accelRaw.y = (((int16_t) buffer[2]) << 8) | buffer[3];
   accelRaw.z = (((int16_t) buffer[4]) << 8) | buffer[5];
-  gyroRaw.y = (((int16_t) buffer[8]) << 8) | buffer[9];
-  gyroRaw.x = (((int16_t) buffer[10]) << 8) | buffer[11];
+  gyroRaw.x = (((int16_t) buffer[8]) << 8) | buffer[9];
+  gyroRaw.y = (((int16_t) buffer[10]) << 8) | buffer[11];
   gyroRaw.z = (((int16_t) buffer[12]) << 8) | buffer[13];
 
 
@@ -344,13 +344,13 @@ void processAccGyroMeasurements(const uint8_t *buffer)
      processAccScale(accelRaw.x, accelRaw.y, accelRaw.z);
   }
 
-  sensorData.gyro.x = -(gyroRaw.x - gyroBias.x) * SENSORS_DEG_PER_LSB_CFG;
-  sensorData.gyro.y =  (gyroRaw.y - gyroBias.y) * SENSORS_DEG_PER_LSB_CFG;
+  sensorData.gyro.x =  -(gyroRaw.x - gyroBias.x) * SENSORS_DEG_PER_LSB_CFG;
+  sensorData.gyro.y =  -(gyroRaw.y - gyroBias.y) * SENSORS_DEG_PER_LSB_CFG;
   sensorData.gyro.z =  (gyroRaw.z - gyroBias.z) * SENSORS_DEG_PER_LSB_CFG;
   applyAxis3fLpf((lpf2pData*)(&gyroLpf), &sensorData.gyro);
 
-  accScaled.x = -(accelRaw.x) * SENSORS_G_PER_LSB_CFG / accScale;
-  accScaled.y =  (accelRaw.y) * SENSORS_G_PER_LSB_CFG / accScale;
+  accScaled.x =  -(accelRaw.x) * SENSORS_G_PER_LSB_CFG / accScale;
+  accScaled.y =  -(accelRaw.y) * SENSORS_G_PER_LSB_CFG / accScale;
   accScaled.z =  (accelRaw.z) * SENSORS_G_PER_LSB_CFG / accScale;
   sensorsAccAlignToGravity(&accScaled, &sensorData.acc);
   applyAxis3fLpf((lpf2pData*)(&accLpf), &sensorData.acc);

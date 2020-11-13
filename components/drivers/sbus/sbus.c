@@ -116,8 +116,9 @@ static void uart_event_task(void *pvParameters)
                 other types of events. If we take too much time on data event, the queue might
                 be full.*/
                 case UART_DATA:
-                    // ESP_LOGI(TAG, "[UART DATA]: %d", event.size);
+                    
                     uart_read_bytes(EX_UART_NUM, (uint8_t *)dtmp, event.size, portMAX_DELAY);
+                    //ESP_LOGI(TAG, "[UART DATA]: %d %02X", event.size,dtmp[0]);
                     if(event.size == 25)
                     {
                         //printf_byte_logd(dtmp,3);
@@ -150,7 +151,7 @@ static void uart_event_task(void *pvParameters)
                             is_send=0;
                             //DEBUG_PRINT("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d",rc_data[0],rc_data[1],rc_data[2],rc_data[3],rc_data[4],rc_data[5],rc_data[6],rc_data[7]);
                         }
-                        
+                        //DEBUG_PRINT("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d",rc_data[0],rc_data[1],rc_data[2],rc_data[3],rc_data[4],rc_data[5],rc_data[6],rc_data[7]);
                     }
                     // ESP_LOGI(TAG, "[DATA EVT]:");
                     // uart_write_bytes(EX_UART_NUM, (const char*) dtmp, event.size);

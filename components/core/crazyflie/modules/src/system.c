@@ -133,9 +133,9 @@ bool systemTest()
 
   pass &= ledseqTest();
   pass &= pmTest();
-  DEBUG_PRINTI("pmTest = %d", pass);
+  //DEBUG_PRINTI("pmTest = %d", pass);
   pass &= workerTest();
-  DEBUG_PRINTI("workerTest = %d", pass);
+  //DEBUG_PRINTI("workerTest = %d", pass);
   pass &= buzzerTest();
   return pass;
 }
@@ -188,22 +188,22 @@ void systemTask(void *arg)
 
 	/* Test each modules */
   pass &= wifiTest();
-  DEBUG_PRINTI("wifilinkTest = %d ", pass);
+  //DEBUG_PRINTI("wifilinkTest = %d ", pass);
   pass &= systemTest();
-  DEBUG_PRINTI("systemTest = %d ", pass);
+  //DEBUG_PRINTI("systemTest = %d ", pass);
   pass &= configblockTest();
-  DEBUG_PRINTI("configblockTest = %d ", pass);
+  //DEBUG_PRINTI("configblockTest = %d ", pass);
   pass &= commTest();
-  DEBUG_PRINTI("commTest = %d ", pass);
+  //DEBUG_PRINTI("commTest = %d ", pass);
   pass &= commanderTest();
-  DEBUG_PRINTI("commanderTest = %d ", pass);
+  //DEBUG_PRINTI("commanderTest = %d ", pass);
   pass &= stabilizerTest();
-  DEBUG_PRINTI("stabilizerTest = %d ", pass);
+  //DEBUG_PRINTI("stabilizerTest = %d ", pass);
   pass &= estimatorKalmanTaskTest();
-  DEBUG_PRINTI("estimatorKalmanTaskTest = %d ", pass);
+  //DEBUG_PRINTI("estimatorKalmanTaskTest = %d ", pass);
   //pass &= soundTest();
   pass &= memTest();
-  DEBUG_PRINTI("memTest = %d ", pass);
+  //DEBUG_PRINTI("memTest = %d ", pass);
   //pass &= watchdogNormalStartTest();
 
   //Start the firmware
